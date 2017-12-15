@@ -1,0 +1,84 @@
+## Ad Forecasting
+
+### Install
+
+* Go to repository directory and run `docker-compose up -d --build` to install and start services
+* Go to http://localhost:8080/ to check that web server is running
+* Stop services by running `docker-compose stop`.
+* Start stopped services by running `docker-compose start`.
+* Remove services by running `docker-compose down`. **Note that this clears the database**
+
+* You can run `docker-compose logs -f -t` to see the logs in the container. (Use CTRL-Z or CTRL-C to escape)
+
+If you wish to run the API service in a shell instead of a Docker container, the API attempts to connect to a MongoDB server at mongodb://127.0.0.1:27017. It creates and uses `forecast` database.
+
+### API commands
+
+#### Zones
+- GET /zones - Returns all the zones
+- POST /zone - Create a single zone from JSON
+  - Example JSON: `{ "id": 123, "title": "Test Zone", "impressions": 5000 }`
+  - Note that all values are required
+- POST /zones - Create several zones from a JSON array
+  - Example JSON: `[ { "id": 103, "title": "test zone 2", "impressions": 15000 }, { "id": 104, "title": "test zone 3", "impressions": 15000 } ]`
+  - Does not verify missing values, uses defaults if missing
+
+#### Ads
+- GET /ads - Returns all adds from all zones
+- POST /ad - Create a single ad
+  - Example JSON: `{ "id": 100, "zone": 123, "priority": 8, "start": "2017-07-01", "end": "2017-07-10", "goal": 15000, "creative": "" }`
+  - Note that all values are required except for `creative`
+- POST /ads - Create several ads from a JSON array
+  - Example JSON: `[ { "id": 111, "zone": 123, "start": "2017-07-01", "end": "2017-07-10", "priority": 8, "goal": 15000 }, { "id": 222, "zone": 123, "start": "2017-07-01", "end": "2017-07-30", "priority": 4, "goal": 120000 }, { "id": 333, "zone": 123, "start": "2017-07-10", "end": "2017-07-14", "priority": 6, "goal": 10000 }, { "id": 444, "zone": 123, "start": "2017-07-01", "end": "2017-07-30", "priority": 2, "goal": 120000 } ]`
+  - Does not verify that required values are present
+  - If duplicate ads defined, shows their IDs
+  - If ads for non-existant zones defined, shows their IDs (assuming they weren't duplicates)
+
+#### Forecast
+- GET /forecast/*zone_id* - Get forecast for *zone_id*.
+  - Displays the situation of defined ads on zone *zone* for the last day in their defined time range. If for example the last end date for all ads in zone is 2017-07-30, that will be used.
+  - You can also add query variable `details` to see history from start of the ad campaigns from start to the end
+  - Add `end` query variable for defining the date which you wish to see (or where the history ends if combined with `details`. If none defined, then last day of the ads for that zone will be used
+  - For example if you wish to see the ad history on 12.7.2017 run the request GET http://localhost:8080/forecast/123?details&end=2017-07-12
+
+##### Example response:
+
+Returns an object that is an array with the contents of the **date** the current entry represents and an array of objects that were shown (or were consumed earlier).
+
+**Ad** - that ad's ID
+**Impressions** - how many impressions of that ad was shown
+**DailyImpressionsRemaining** - Zone's remaining impressions after ad was shown
+**Percentage** - Percentage of how many of ad's intended impressions was shown
+
+Note, that if Impressions are 0 and Percentage is 100%, that ad has been fully consumed in the past.
+
+```
+{
+	"Days": [
+		{
+			"Date": "2017-07-01",
+			"Shown": [
+				{
+					"Ad": 111,
+					"Impressions": 1500,
+					"DailyImpressionsRemaining": 3500,
+					"Percentage": "100.0%"
+				} ]
+        }]
+}
+```
+
+#### General
+- GET /health - For healthchecks
+
+### Guide for non-developers
+
+#### How forecasting works
+
+Ads are shown based on priority and daily impressions. Each ad zone has a certain amount of impressions it can display per day. If the daily impressions for ad exceed that, the remaining impressions are postponed for later.
+
+Ad's daily impressions are defined by splitting it's impression goal by it's starting and ending time. If the goal is 100 and it is split between 10 days, ad's daily impressions are 10 per day.
+
+If an ad or ads with a higher priority than the specified ad consume all the zone's daily impressions, that ad will not be shown. This means that even if the ad is specified to show 10 ads per day for 10 days, only some or none at all will be displayed during the defined timeframe.
+
+You can use API to set up a date to see how the displays for the zone would work as time goes by. For example using an APIP call http://localhost:8080/forecast/123?details&end=2017-08-31 you can see how several ads in zone 123 would behave from their first defined timeframe to the specified date, assuming their definitions are set so that for example ads begin showing on 1.7.2017 and end on 30.7.2017.
