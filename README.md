@@ -36,8 +36,8 @@ If you wish to run the API service in a shell instead of a Docker container, the
 
 #### Forecast
 - GET /forecast/*zone_id* - Get forecast for *zone_id*.
-  - Displays the situation of defined ads on zone *zone* for the last day in their defined time range. If for example the last end date for all ads in zone is 2017-07-30, that will be used.
-  - You can also add query variable `details` to see history from start of the ad campaigns from start to the end
+  - Displays the situation of defined ads on zone *zone_id* for the last day in their defined time range. If for example the last end date for all ads in zone is 2017-07-30, that will be used.
+  - You can also add query variable `details` to see history from start of the ad campaigns to the end
   - Add `end` query variable for defining the date which you wish to see (or where the history ends if combined with `details`. If none defined, then last day of the ads for that zone will be used
   - For example if you wish to see the ad history on 12.7.2017 run the request GET http://localhost:8080/forecast/123?details&end=2017-07-12
 
@@ -45,10 +45,10 @@ If you wish to run the API service in a shell instead of a Docker container, the
 
 Returns an object that is an array with the contents of the **date** the current entry represents and an array of objects that were shown (or were consumed earlier).
 
-**Ad** - that ad's ID
-**Impressions** - how many impressions of that ad was shown
-**DailyImpressionsRemaining** - Zone's remaining impressions after ad was shown
-**Percentage** - Percentage of how many of ad's intended impressions was shown
+* **Ad** - that ad's ID
+* **Impressions** - how many impressions of that ad was shown
+* **DailyImpressionsRemaining** - Zone's remaining impressions after ad was shown
+* **Percentage** - Percentage of how many of ad's intended impressions was shown
 
 Note, that if Impressions are 0 and Percentage is 100%, that ad has been fully consumed in the past.
 
@@ -81,4 +81,4 @@ Ad's daily impressions are defined by splitting it's impression goal by it's sta
 
 If an ad or ads with a higher priority than the specified ad consume all the zone's daily impressions, that ad will not be shown. This means that even if the ad is specified to show 10 ads per day for 10 days, only some or none at all will be displayed during the defined timeframe.
 
-You can use API to set up a date to see how the displays for the zone would work as time goes by. For example using an APIP call http://localhost:8080/forecast/123?details&end=2017-08-31 you can see how several ads in zone 123 would behave from their first defined timeframe to the specified date, assuming their definitions are set so that for example ads begin showing on 1.7.2017 and end on 30.7.2017.
+You can use API to set up a date to see how the displays for the zone would work as time goes by. For example using an API call http://localhost:8080/forecast/123?details&end=2017-08-31 you can see how several ads in zone 123 would behave from their first defined timeframe to the specified date, assuming their definitions are set so that for example ads begin showing on 1.7.2017 and end on 30.7.2017.
