@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
     "net/http"
@@ -48,7 +48,7 @@ func addAds(c *gin.Context) {
             continue
         }
         if !zoneExists(ad.ZoneId) {
-            missingArr = append(duplicateArr, ad.Id)
+            missingArr = append(missingArr, ad.Id)
             continue
         }
         if err := ads.Insert(ad); err != nil {
